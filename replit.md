@@ -13,7 +13,8 @@ endpoint returns a JSON status response for a simple runtime check.
 
 ## Project status
 
-The imported repository originally contained the project description but no
-application entry point or dependency manifest. The current app is an
-accessible starter page based on that description; the hiring workflows and
-data model still need to be designed and implemented.
+The current app is an accessible bilingual starter experience. It supports
+English and Arabic language switching, updates the document direction for RTL
+layouts, and includes translated job discovery content with client-side search
+validation. The hiring workflows and data model still need to be designed and
+implemented.
