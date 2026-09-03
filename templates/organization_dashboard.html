@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ t("organization_dashboard") }} | Irada{% endblock %}
+{% block content %}
+  <section class="dashboard-heading">
+    <div>
+      <p class="eyebrow">{{ t("organization") }}</p>
+      <h1>{{ t("welcome", name=current_user["company_name"] or current_user["full_name"]) }}</h1>
+      <p class="lead">{{ t("roles_intro") }}</p>
+    </div>
+    <a class="button button-primary" href="{{ url_for('create_job') }}">{{ t("post_job") }}</a>
+  </section>
+  <section class="dashboard-section" aria-labelledby="manage-heading">
+    <div class="section-heading compact"><h2 id="manage-heading">{{ t("manage_jobs") }}</h2></div>
+    {% if jobs %}
+      <div class="manage-list">
+        {% for job in jobs %}
+          <article class="manage-card">
+            <div>
+              <span class="tag">{{ t("open") if job["is_open"] else t("closed") }}</span>
+              <h3><a href="{{ url_for('job_detail', job_id=job['id']) }}">{{ job["title"] }}</a></h3>
+              <p class="muted">{{ job_type_label(job["work_type"]) }} · {{ job["applicant_count"] }} {{ t("applicants") }}</p>
+            </div>
+            <div class="card-actions">
+              <a class="button button-secondary small-button" href="{{ url_for('edit_job', job_id=job['id']) }}">{{ t("edit") }}</a>
+              {% if job["is_open"] %}
+                <form method="post" action="{{ url_for('close_job', job_id=job['id']) }}" class="inline-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="button button-quiet small-button" type="submit">{{ t("close") }}</button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><h3>{{ t("no_jobs") }}</h3><a class="button button-primary" href="{{ url_for('create_job') }}">{{ t("post_job") }}</a></div>
+    {% endif %}
+  </section>
+  <section class="dashboard-section" aria-labelledby="review-heading">
+    <div class="section-heading compact"><h2 id="review-heading">{{ t("review_applications") }}</h2></div>
+    {% if applications %}
+      <div class="review-list">
+        {% for application in applications %}
+          <article class="review-card">
+            <div class="review-main">
+              <h3>{{ application["full_name"] }}</h3>
+              <p class="company-name">{{ application["title"] }} · {{ application["email"] }}</p>
+              {% if application["bio"] %}<p class="muted">{{ application["bio"] }}</p>{% endif %}
+              {% if application["skills"] %}<p><strong>{{ t("skills") }}:</strong> {{ application["skills"] }}</p>{% endif %}
+              {% if application["access_needs"] %}<p><strong>{{ t("access_needs") }}:</strong> {{ application["access_needs"] }}</p>{% endif %}
+              {% if application["cover_note"] %}<p class="note"><strong>{{ t("application_note") }}:</strong> {{ application["cover_note"] }}</p>{% endif %}
+            </div>
+            <form class="status-form" method="post" action="{{ url_for('update_application_status', application_id=application['id']) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <label for="status-{{ application['id'] }}">{{ t("status") }}</label>
+              <select id="status-{{ application['id'] }}" name="status">
+                {% for status in status_options %}
+                  <option value="{{ status }}" {% if application["status"] == status %}selected{% endif %}>{{ t("status_" + status) }}</option>
+                {% endfor %}
+              </select>
+              <button class="button button-primary small-button" type="submit">{{ t("update_status") }}</button>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><h3>{{ t("no_applications") }}</h3></div>
+    {% endif %}
+  </section>
+{% endblock %}

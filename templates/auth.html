@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ t("login_title") if mode == "login" else t("register_title") }} | Irada{% endblock %}
+{% block content %}
+  <section class="auth-layout">
+    <div class="auth-intro">
+      <p class="eyebrow">{{ t("remote_work") }}</p>
+      <h1>{{ t("login_title") if mode == "login" else t("register_title") }}</h1>
+      <p class="lead">{{ t("hero_intro") }}</p>
+    </div>
+    <div class="form-card">
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if request.args.get("next") %}
+          <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+        {% endif %}
+        {% if mode == "register" %}
+          <div class="field">
+            <label for="full_name">{{ t("full_name") }}</label>
+            <input id="full_name" name="full_name" required autocomplete="name" value="{{ request.form.get('full_name', '') }}">
+          </div>
+        {% endif %}
+        <div class="field">
+          <label for="email">{{ t("email") }}</label>
+          <input id="email" name="email" type="email" required autocomplete="email" value="{{ request.form.get('email', '') }}">
+        </div>
+        <div class="field">
+          <label for="password">{{ t("password") }}</label>
+          <input id="password" name="password" type="password" required minlength="8" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}">
+          {% if mode == "register" %}<small>{{ t("password_hint") }}</small>{% endif %}
+        </div>
+        {% if mode == "register" %}
+          <fieldset class="field role-field">
+            <legend>{{ t("account_type") }}</legend>
+            <label class="choice"><input type="radio" name="role" value="candidate" checked> {{ t("candidate_account") }}</label>
+            <label class="choice"><input type="radio" name="role" value="organization"> {{ t("organization_account") }}</label>
+          </fieldset>
+          <div class="field company-field" hidden>
+            <label for="company_name">{{ t("company_name") }}</label>
+            <input id="company_name" name="company_name" autocomplete="organization">
+          </div>
+        {% endif %}
+        <button class="button button-primary full-width" type="submit">{{ t("sign_in_action") if mode == "login" else t("create_account_action") }}</button>
+      </form>
+      <p class="form-switch">
+        {% if mode == "login" %}{{ t("need_account") }} <a href="{{ url_for('register') }}">{{ t("create_account") }}</a>
+        {% else %}{{ t("have_account") }} <a href="{{ url_for('login') }}">{{ t("sign_in") }}</a>{% endif %}
+      </p>
+    </div>
+  </section>
+  {% if mode == "register" %}
+    <script>
+      const roleInputs = document.querySelectorAll('input[name="role"]');
+      const companyField = document.querySelector(".company-field");
+      const companyInput = document.querySelector("#company_name");
+      function updateCompanyField() {
+        const organization = document.querySelector('input[name="role"]:checked').value === "organization";
+        companyField.hidden = !organization;
+        companyInput.required = organization;
+      }
+      roleInputs.forEach((input) => input.addEventListener("change", updateCompanyField));
+      updateCompanyField();
+    </script>
+  {% endif %}
+{% endblock %}

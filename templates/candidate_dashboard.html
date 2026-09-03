@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ t("candidate_dashboard") }} | Irada{% endblock %}
+{% block content %}
+  <section class="dashboard-heading">
+    <div>
+      <p class="eyebrow">{{ t("candidate") }}</p>
+      <h1>{{ t("welcome", name=current_user["full_name"]) }}</h1>
+      <p class="lead">{{ t("saved_profile") }}</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('profile') }}">{{ t("edit_profile") }}</a>
+  </section>
+  <section class="dashboard-section" aria-labelledby="applications-heading">
+    <div class="section-heading compact">
+      <h2 id="applications-heading">{{ t("my_applications") }}</h2>
+      <a class="text-link" href="{{ url_for('home') }}#jobs">{{ t("browse_roles") }} <span aria-hidden="true">↗</span></a>
+    </div>
+    {% if applications %}
+      <div class="application-list">
+        {% for application in applications %}
+          <article class="application-card">
+            <div>
+              <h3><a href="{{ url_for('job_detail', job_id=application['job_id']) }}">{{ application["title"] }}</a></h3>
+              <p class="company-name">{{ application["company_name"] }} · {{ job_type_label(application["work_type"]) }}</p>
+              <p class="muted">{{ application["created_at"]|date_only }}</p>
+            </div>
+            <span class="status-badge status-{{ application['status'] }}">{{ t("status_" + application["status"]) }}</span>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><h3>{{ t("no_applications") }}</h3><a class="button button-primary" href="{{ url_for('home') }}#jobs">{{ t("browse_roles") }}</a></div>
+    {% endif %}
+  </section>
+{% endblock %}

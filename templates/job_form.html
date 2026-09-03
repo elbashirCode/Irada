@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ t("edit_job") if editing else t("new_job") }} | Irada{% endblock %}
+{% block content %}
+  <section class="form-page">
+    <div class="page-heading">
+      <a class="back-link" href="{{ url_for('dashboard') }}">← {{ t("back") }}</a>
+      <p class="eyebrow">{{ t("organization") }}</p>
+      <h1>{{ t("edit_job") if editing else t("new_job") }}</h1>
+    </div>
+    <div class="form-card wide">
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label for="title">{{ t("job_title") }}</label>
+          <input id="title" name="title" required value="{{ form['title'] }}">
+        </div>
+        <div class="field">
+          <label for="description">{{ t("description") }}</label>
+          <textarea id="description" name="description" rows="7" required>{{ form['description'] }}</textarea>
+        </div>
+        <div class="field">
+          <label for="work_type">{{ t("work_type") }}</label>
+          <select id="work_type" name="work_type" required>
+            <option value="full-time" {% if form["work_type"] == "full-time" %}selected{% endif %}>{{ t("full_time") }}</option>
+            <option value="part-time" {% if form["work_type"] == "part-time" %}selected{% endif %}>{{ t("part_time") }}</option>
+            <option value="contract" {% if form["work_type"] == "contract" %}selected{% endif %}>{{ t("contract") }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="accessibility">{{ t("accessibility") }}</label>
+          <textarea id="accessibility" name="accessibility" rows="4" aria-describedby="accessibility-hint">{{ form["accessibility"] }}</textarea>
+          <small id="accessibility-hint">{{ t("accessibility_hint") }}</small>
+        </div>
+        <button class="button button-primary" type="submit">{{ t("save_changes") if editing else t("publish_job") }}</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}

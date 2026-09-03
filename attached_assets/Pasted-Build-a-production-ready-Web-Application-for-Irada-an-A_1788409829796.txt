@@ -1,0 +1,40 @@
+Build a production-ready Web Application for "Irada" (إرادة), an Arabic remote hiring platform empowering Sudanese job seekers with disabilities.
+
+### Technical Stack:
+- Backend: Python with Flask & Flask-SQLAlchemy (SQLite database)
+- Frontend: HTML5 (RTL enabled, dir="rtl", lang="ar"), Bootstrap 5.3 RTL, FontAwesome 6, custom CSS/JS.
+- Accessibility Standards: Full WCAG 2.1 AA compliance (keyboard navigation, high-contrast UI, screen-reader friendly with proper ARIA attributes and labels).
+
+### Database Models (models.py):
+1. User:
+   - id, full_name, email (unique), password_hash, role ('job_seeker' or 'employer'), created_at.
+2. Profile:
+   - id, user_id (foreign key), bio, skills (comma-separated), disability_type, resume_link, phone.
+3. Job:
+   - id, employer_id (foreign key), title, description, skills_required, location ('Remote'), salary_range, status ('open'/'closed'), created_at.
+4. Application:
+   - id, job_id (foreign key), seeker_id (foreign key), status ('pending', 'reviewed', 'accepted', 'rejected'), cover_letter, applied_at.
+
+### Core Features & Routes:
+1. Public Pages:
+   - Home Page (`/`): Highlighting platform mission ("إرادة - منصة التوظيف الرقمي للكوادر من ذوي الهمم"), search bar for jobs, featured remote positions, and accessibility quick-toggle mode (High Contrast / Large Text).
+   - About Page (`/about`): Story and impact statement.
+2. Authentication (`/login`, `/register`, `/logout`):
+   - Secure user registration with role selection (Job Seeker / Employer).
+   - Password hashing using Werkzeug.
+3. Job Seeker Features:
+   - Dashboard (`/seeker/dashboard`): View applied jobs and status.
+   - Job Browse & Search (`/jobs`): Filter remote opportunities by skills and keywords.
+   - Job Detail & Apply (`/jobs/<id>`): View job specs and submit application with a cover letter.
+   - Profile Setup (`/seeker/profile`): Edit skills, bio, resume link, and disability accommodations.
+4. Employer Features:
+   - Dashboard (`/employer/dashboard`): Manage posted jobs and review candidate applications.
+   - Post Job (`/employer/jobs/create`): Form to publish remote job openings.
+
+### Layout & UI Specs:
+- Clean, modern, Arabic-first interface with intuitive navigation.
+- Accessible color scheme (primary blue/teal, high contrast elements).
+- Flash messaging for user notifications (success, errors).
+- Clean project layout: `app.py`, `models.py`, `templates/` (with `base.html` layout inheritance), `static/` (for CSS/JS).
+
+Please write complete, modular, and runnable code for all backend logic, database setup, and frontend HTML templates with Bootstrap RTL.

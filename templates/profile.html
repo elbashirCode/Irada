@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ t("profile") }} | Irada{% endblock %}
+{% block content %}
+  <section class="form-page">
+    <div class="page-heading">
+      <a class="back-link" href="{{ url_for('dashboard') }}">← {{ t("back") }}</a>
+      <p class="eyebrow">{{ t("candidate") }}</p>
+      <h1>{{ t("candidate_profile") }}</h1>
+      <p class="lead">{{ t("saved_profile") }}</p>
+    </div>
+    <div class="form-card wide">
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label for="full_name">{{ t("full_name") }}</label>
+          <input id="full_name" name="full_name" required value="{{ current_user['full_name'] }}">
+        </div>
+        <div class="field">
+          <label for="bio">{{ t("bio") }}</label>
+          <textarea id="bio" name="bio" rows="5" placeholder="{{ t('bio') }}">{{ current_user["bio"] }}</textarea>
+        </div>
+        <div class="field">
+          <label for="skills">{{ t("skills") }}</label>
+          <input id="skills" name="skills" value="{{ current_user['skills'] }}" placeholder="e.g. customer support, writing">
+        </div>
+        <div class="field">
+          <label for="access_needs">{{ t("access_needs") }}</label>
+          <textarea id="access_needs" name="access_needs" rows="4" aria-describedby="access-hint">{{ current_user["access_needs"] }}</textarea>
+          <small id="access-hint">{{ t("access_needs_hint") }}</small>
+        </div>
+        <button class="button button-primary" type="submit">{{ t("save_profile") }}</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}

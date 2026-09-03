@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">{{ t("remote_work") }}</p>
+      <h1>{{ t("hero_title")|safe }}</h1>
+      <p class="lead">{{ t("hero_intro") }}</p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="#jobs">{{ t("explore_jobs") }}</a>
+        {% if current_user %}
+          <a class="button button-secondary" href="{{ url_for('dashboard') }}">{{ t("dashboard") }}</a>
+        {% else %}
+          <a class="button button-secondary" href="{{ url_for('register') }}">{{ t("join_irada") }}</a>
+        {% endif %}
+      </div>
+    </div>
+    <aside class="hero-card" aria-label="{{ t('inclusive_future') }}">
+      <span class="card-kicker">إرادة</span>
+      <h2>{{ t("inclusive_future") }}</h2>
+      <p>{{ t("inclusive_copy") }}</p>
+      <div class="hero-stat">
+        <strong>{{ open_count }}</strong>
+        <span>{{ t("open_roles") }}</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="section" id="jobs" aria-labelledby="jobs-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">{{ t("remote_work") }}</p>
+        <h2 id="jobs-heading">{{ t("roles_heading") }}</h2>
+      </div>
+      <p>{{ t("roles_intro") }}</p>
+    </div>
+    <form class="search-panel" method="get" action="{{ url_for('home') }}">
+      <div class="field">
+        <label for="q">{{ t("search_roles") }}</label>
+        <input id="q" name="q" type="search" value="{{ query }}" placeholder="{{ t('search_placeholder') }}" minlength="2">
+      </div>
+      <div class="field">
+        <label for="work_type">{{ t("work_type") }}</label>
+        <select id="work_type" name="work_type">
+          <option value="all" {% if work_type == "all" %}selected{% endif %}>{{ t("all_types") }}</option>
+          <option value="full-time" {% if work_type == "full-time" %}selected{% endif %}>{{ t("full_time") }}</option>
+          <option value="part-time" {% if work_type == "part-time" %}selected{% endif %}>{{ t("part_time") }}</option>
+          <option value="contract" {% if work_type == "contract" %}selected{% endif %}>{{ t("contract") }}</option>
+        </select>
+      </div>
+      <button class="button button-primary" type="submit">{{ t("search") }}</button>
+    </form>
+    <p class="search-message" role="status">{{ search_message }}</p>
+    {% if jobs %}
+      <div class="job-grid">
+        {% for job in jobs %}
+          <article class="job-card">
+            <span class="tag">{{ job_type_label(job["work_type"]) }}</span>
+            <h3>{{ job["title"] }}</h3>
+            <p class="company-name">{{ job["company_name"] }}</p>
+            <p class="muted job-summary">{{ job["description"] }}</p>
+            <div class="job-meta">
+              <span>{{ t("remote") }}</span>
+              <span>{{ job["created_at"]|date_only }}</span>
+            </div>
+            <a class="text-link" href="{{ url_for('job_detail', job_id=job['id']) }}">{{ t("view_role") }} <span aria-hidden="true">↗</span></a>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3>{{ t("no_roles") }}</h3>
+        {% if current_user and current_user["role"] == "organization" %}
+          <a class="button button-primary" href="{{ url_for('create_job') }}">{{ t("post_job") }}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="section" id="how-it-works" aria-labelledby="how-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">{{ t("how_it_works") }}</p>
+        <h2 id="how-heading">{{ t("how_title") }}</h2>
+      </div>
+      <p>{{ t("how_intro") }}</p>
+    </div>
+    <div class="steps-grid">
+      <article class="step-card"><span>01</span><h3>{{ t("discover_fit") }}</h3><p>{{ t("discover_copy") }}</p></article>
+      <article class="step-card"><span>02</span><h3>{{ t("show_strengths") }}</h3><p>{{ t("show_copy") }}</p></article>
+      <article class="step-card"><span>03</span><h3>{{ t("build_next") }}</h3><p>{{ t("build_copy") }}</p></article>
+    </div>
+  </section>
+{% endblock %}

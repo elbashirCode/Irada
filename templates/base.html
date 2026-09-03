@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="{{ current_language }}" dir="{{ 'rtl' if current_language == 'ar' else 'ltr' }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Irada is an accessible remote hiring platform for Sudanese talent.">
+    <title>{% block title %}Irada | إرادة{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">{{ t("home") }} — skip to content</a>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="{{ url_for('home') }}" aria-label="Irada">
+          <span class="brand-mark" aria-hidden="true">إ</span>
+          <span>Irada · إرادة</span>
+        </a>
+        <nav class="main-nav" aria-label="Primary navigation">
+          <a href="{{ url_for('home') }}#jobs">{{ t("find_work") }}</a>
+          <a href="{{ url_for('home') }}#how-it-works">{{ t("how_it_works") }}</a>
+          {% if current_user %}
+            <a href="{{ url_for('dashboard') }}">{{ t("dashboard") }}</a>
+          {% endif %}
+        </nav>
+        <div class="header-actions">
+          <a class="language-link" href="{{ url_for('set_language', language='ar' if current_language == 'en' else 'en', next=request.full_path) }}">
+            {{ t("other_language") }}
+          </a>
+          {% if current_user %}
+            <span class="user-chip">{{ current_user["full_name"] }}</span>
+            <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="button button-quiet" type="submit">{{ t("sign_out") }}</button>
+            </form>
+          {% else %}
+            <a class="button button-quiet" href="{{ url_for('login', next=request.full_path) }}">{{ t("sign_in") }}</a>
+            <a class="button button-primary small-button" href="{{ url_for('register') }}">{{ t("create_account") }}</a>
+          {% endif %}
+        </div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack" aria-live="polite">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <main id="main-content">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="site-footer">
+        <strong>Irada · إرادة</strong>
+        <span>{{ t("footer") }}</span>
+      </footer>
+    </div>
+  </body>
+</html>
