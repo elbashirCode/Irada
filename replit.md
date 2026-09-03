@@ -19,6 +19,10 @@ Run the smoke tests with:
 python -m unittest discover -s tests
 ```
 
+The smoke suite also checks the home page's landmarks, heading hierarchy,
+search controls, language controls, and keyboard-relevant labels and
+attributes.
+
 Run the normal validation checks with:
 
 ```bash

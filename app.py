@@ -392,7 +392,7 @@ PAGE = """<!doctype html>
             </div>
             <p data-i18n="jobsIntro">Browse a few examples of remote roles created with flexibility and clear expectations in mind.</p>
           </div>
-          <form class="search-box" id="job-search" novalidate>
+          <form class="search-box" id="job-search" aria-labelledby="jobs-title" novalidate>
             <div class="field">
               <label for="keyword" data-i18n="keywordLabel">Search roles</label>
               <input id="keyword" name="keyword" type="search" autocomplete="off" minlength="2" required aria-describedby="search-message" data-i18n-placeholder="keywordPlaceholder" placeholder="Try “customer support”">
