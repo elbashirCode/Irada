@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 
@@ -66,6 +67,129 @@ def _extract_referenced_keys(page: str) -> tuple[set[str], set[str]]:
     return ui_keys, job_keys
 
 
+def _extract_jobs(page: str) -> list[dict[str, str]]:
+    """Extract the small job catalog used by the page's client-side search."""
+    jobs_match = re.search(
+        r"const jobs\s*=\s*\[(?P<jobs>.*?)\n\s*\];",
+        page,
+        re.DOTALL,
+    )
+    if not jobs_match:
+        raise ValueError("Could not find the jobs catalog in app.py")
+
+    return [
+        dict(re.findall(r'\b([A-Za-z][A-Za-z0-9_]*):\s*"([^"]+)"', job))
+        for job in re.findall(r"\{([^{}]+)\}", jobs_match.group("jobs"))
+    ]
+
+
+class _SearchMarkupParser(HTMLParser):
+    """Capture the browser-facing elements needed to submit a search."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ids: set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        del tag
+        attributes = dict(attrs)
+        element_id = attributes.get("id")
+        if element_id:
+            self.ids.add(element_id)
+
+
+def _check_search_flow(page: str) -> list[str]:
+    """Exercise the browser-facing search contract for both supported languages."""
+    try:
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from app import app
+
+        with app.test_client() as client:
+            response = client.get("/")
+    except Exception as error:
+        return [f"Could not load the search page: {error}"]
+
+    if response.status_code != 200:
+        return [f"Search page returned HTTP {response.status_code}"]
+
+    rendered_page = response.get_data(as_text=True)
+    parser = _SearchMarkupParser()
+    parser.feed(rendered_page)
+    required_ids = {"job-search", "keyword", "work-type", "search-message", "job-list"}
+    missing_ids = sorted(required_ids - parser.ids)
+    errors: list[str] = []
+    if missing_ids:
+        errors.append(
+            "Search page is missing browser element(s): " + ", ".join(missing_ids)
+        )
+
+    # Keep this check tied to the actual branch in the page script. The cases
+    # below then verify that each branch renders the selected catalog message.
+    branch_pattern = (
+        r'const resultMessageKey = filteredJobs\.length === 0\s*'
+        r'\?\s*"searchNone"\s*'
+        r': filteredJobs\.length === 1\s*'
+        r'\?\s*"searchFoundOne"\s*'
+        r':\s*"searchFoundMany"'
+    )
+    if not re.search(branch_pattern, rendered_page):
+        errors.append(
+            "Search flow must select searchNone, searchFoundOne, or "
+            "searchFoundMany by result count"
+        )
+
+    catalogs = _extract_catalogs(rendered_page)
+    jobs = _extract_jobs(rendered_page)
+    scenarios = (
+        ("ar", "ال", 3, "وجدنا 3 وظائف تطابق بحثك عن «ال»."),
+        ("ar", "دعم", 1, "وجدنا وظيفة واحدة تطابق بحثك عن «دعم»."),
+        (
+            "ar",
+            "زقزوق",
+            0,
+            "لا توجد وظائف تطابق بحثك عن «زقزوق» حالياً. جرّب بحثاً آخر.",
+        ),
+        ("en", "support", 1, "1 roles match “support”."),
+    )
+    for language, keyword, expected_count, expected_message in scenarios:
+        matches = [
+            job
+            for job in jobs
+            if keyword.casefold()
+            in " ".join(
+                catalogs[search_language][job[field]]
+                for search_language in ("en", "ar")
+                for field in ("title", "company", "description")
+            ).casefold()
+        ]
+        count = len(matches)
+        result_key = (
+            "searchNone"
+            if count == 0
+            else "searchFoundOne"
+            if count == 1
+            else "searchFoundMany"
+        )
+        message = catalogs[language][result_key]
+        message = message.replace("{count}", str(count)).replace("{keyword}", keyword)
+        label = f"{language} search for {keyword!r}"
+        if count != expected_count:
+            errors.append(
+                f"{label} expected {expected_count} result(s), found {count}"
+            )
+        if message != expected_message:
+            errors.append(
+                f"{label} rendered unexpected message: {message!r}"
+            )
+        if keyword not in message:
+            errors.append(f"{label} omitted the searched keyword")
+        if "{count}" in message or "{keyword}" in message:
+            errors.append(f"{label} left an interpolation placeholder unresolved")
+
+    return errors
+
+
 def validate(page: str) -> list[str]:
     """Return all translation contract violations found in the page."""
     catalogs = _extract_catalogs(page)
@@ -110,7 +234,9 @@ def validate(page: str) -> list[str]:
 
 def main() -> int:
     try:
-        errors = validate(APP_PATH.read_text(encoding="utf-8"))
+        page = APP_PATH.read_text(encoding="utf-8")
+        errors = validate(page)
+        errors.extend(_check_search_flow(page))
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"Translation check failed: {error}", file=sys.stderr)
         return 1
@@ -130,6 +256,7 @@ def main() -> int:
         f"{len(ui_keys)} UI keys and {len(job_keys)} job keys "
         "have English and Arabic values."
     )
+    print("Search flow check passed: Arabic zero/one/many and English baseline.")
     return 0
 
 
