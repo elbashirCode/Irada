@@ -1,5 +1,10 @@
+import shutil
+import threading
 import unittest
 from html.parser import HTMLParser
+
+from playwright.sync_api import sync_playwright
+from werkzeug.serving import make_server
 
 from app import app
 
@@ -33,6 +38,128 @@ class _PageMarkupParser(HTMLParser):
             if self._text_stack[index]["tag"] == tag:
                 del self._text_stack[index:]
                 break
+
+
+class AppBrowserRegressionTests(unittest.TestCase):
+    """Run the responsive and keyboard contract in a real browser."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.server = make_server("127.0.0.1", 0, app)
+        cls.server_thread = threading.Thread(
+            target=cls.server.serve_forever,
+            name="test-app-server",
+            daemon=True,
+        )
+        cls.server_thread.start()
+
+        cls.playwright = sync_playwright().start()
+        cls.browser = cls.playwright.chromium.launch(
+            headless=True,
+            executable_path=shutil.which("chromium"),
+        )
+        cls.home_url = f"http://127.0.0.1:{cls.server.server_port}/"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.browser.close()
+        cls.playwright.stop()
+        cls.server.shutdown()
+        cls.server_thread.join()
+
+    def _assert_reachable_without_overflow(self, page, viewport_width):
+        metrics = page.evaluate(
+            """() => ({
+                clientWidth: document.documentElement.clientWidth,
+                documentWidth: Math.max(
+                    document.documentElement.scrollWidth,
+                    document.body.scrollWidth
+                )
+            })"""
+        )
+        self.assertLessEqual(
+            metrics["documentWidth"],
+            metrics["clientWidth"],
+            "the page must not overflow horizontally",
+        )
+        self.assertEqual(metrics["clientWidth"], viewport_width)
+
+        selectors = (
+            "header",
+            "nav",
+            "nav a",
+            ".language-switcher",
+            ".language-switcher button",
+            "#job-search",
+            "#job-search input",
+            "#job-search select",
+            "#job-search button",
+            ".hero-actions a",
+        )
+        for selector in selectors:
+            elements = page.locator(selector)
+            self.assertGreater(elements.count(), 0, f"missing {selector}")
+            for index in range(elements.count()):
+                element = elements.nth(index)
+                self.assertTrue(element.is_visible(), f"{selector} is not visible")
+                box = element.bounding_box()
+                self.assertIsNotNone(box, f"{selector} has no layout box")
+                self.assertGreaterEqual(box["x"], 0, f"{selector} starts off-screen")
+                self.assertLessEqual(
+                    box["x"] + box["width"],
+                    viewport_width,
+                    f"{selector} extends past the viewport",
+                )
+
+    def _assert_skip_link_focus(self, page):
+        page.keyboard.press("Tab")
+        skip_link = page.locator(".skip-link")
+        page.wait_for_function(
+            """() => {
+                const link = document.querySelector(".skip-link");
+                return link && link.getBoundingClientRect().top >= 0;
+            }"""
+        )
+        focus_styles = skip_link.evaluate(
+            """element => {
+                const styles = getComputedStyle(element);
+                const box = element.getBoundingClientRect();
+                return {
+                    focused: document.activeElement === element,
+                    top: box.top,
+                    outlineStyle: styles.outlineStyle,
+                    outlineWidth: styles.outlineWidth
+                };
+            }"""
+        )
+        self.assertTrue(focus_styles["focused"])
+        self.assertGreaterEqual(focus_styles["top"], 0)
+        self.assertNotEqual(focus_styles["outlineStyle"], "none")
+        self.assertNotEqual(focus_styles["outlineWidth"], "0px")
+
+        skip_link.click()
+        self.assertEqual(
+            page.evaluate("document.activeElement && document.activeElement.id"),
+            "main-content",
+        )
+
+    def test_home_page_browser_covers_mobile_zoom_and_skip_link(self):
+        # A 640px CSS viewport models a 1280px desktop viewport at 200% zoom.
+        for viewport_width in (320, 640):
+            with self.subTest(viewport_width=viewport_width):
+                context = self.browser.new_context(
+                    viewport={"width": viewport_width, "height": 900}
+                )
+                page = context.new_page()
+                try:
+                    page.goto(self.home_url, wait_until="networkidle")
+                    self._assert_reachable_without_overflow(page, viewport_width)
+                    self._assert_skip_link_focus(page)
+
+                    page.get_by_role("button", name="العربية").click()
+                    self._assert_reachable_without_overflow(page, viewport_width)
+                finally:
+                    context.close()
 
 
 class AppSmokeTests(unittest.TestCase):

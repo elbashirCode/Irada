@@ -39,9 +39,10 @@ Use the running Preview to repeat this browser-facing check:
 4. Repeat at 320px wide with Arabic selected. Confirm the same checks pass in
    the right-to-left layout.
 
-The responsive breakpoints and skip-link target are also protected by
-`test_home_page_includes_responsive_and_focus_regression_contract` in the
-smoke suite.
+The automated browser regression test
+`test_home_page_browser_covers_mobile_zoom_and_skip_link` runs in the smoke
+suite. Keep this manual Preview procedure as a debugging aid when diagnosing a
+visual or keyboard regression.
 
 Run the normal validation checks with:
 
