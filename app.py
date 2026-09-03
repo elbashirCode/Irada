@@ -586,7 +586,11 @@ PAGE = """<!doctype html>
       const jobList = document.getElementById("job-list");
 
       function text(key, language = currentLanguage) {
-        return translations[language][key] || translations.en[key] || key;
+        const catalog = translations[language];
+        if (!catalog || !Object.prototype.hasOwnProperty.call(catalog, key)) {
+          throw new Error(`Missing ${language} translation key: ${key}`);
+        }
+        return catalog[key];
       }
 
       function applyTranslations() {
