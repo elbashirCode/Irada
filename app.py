@@ -121,7 +121,7 @@ PAGE = """<!doctype html>
         background: var(--ink);
         color: white;
       }
-      main { padding-bottom: 86px; }
+      main { padding-bottom: 86px; scroll-margin-top: 20px; }
       .hero {
         display: grid;
         grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
@@ -316,8 +316,10 @@ PAGE = """<!doctype html>
       [dir="rtl"] h1 { letter-spacing: 0; line-height: 1.15; }
       [dir="rtl"] .eyebrow { letter-spacing: 0; }
       @media (max-width: 840px) {
+        header { flex-wrap: wrap; row-gap: 14px; }
         nav { gap: 13px; }
         nav a { font-size: .83rem; }
+        nav { order: 3; width: 100%; justify-content: space-between; flex-wrap: wrap; }
         .hero { grid-template-columns: 1fr; min-height: auto; }
         .jobs, .how-grid { grid-template-columns: repeat(2, 1fr); }
         .search-box { grid-template-columns: 1fr 1fr; }
@@ -325,8 +327,28 @@ PAGE = """<!doctype html>
       }
       @media (max-width: 620px) {
         .shell { width: min(100% - 28px, 560px); }
-        header { flex-wrap: wrap; padding: 18px 0; }
-        nav { order: 3; width: 100%; justify-content: space-between; padding-top: 7px; }
+        header {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          column-gap: 12px;
+          row-gap: 10px;
+          padding: 18px 0;
+        }
+        .brand {
+          min-width: 0;
+          gap: 8px;
+          font-size: 1.08rem;
+          white-space: normal;
+        }
+        .language-switcher { justify-self: end; }
+        nav {
+          grid-column: 1 / -1;
+          order: initial;
+          justify-content: space-between;
+          gap: 8px 13px;
+          padding-top: 0;
+        }
+        nav a { min-width: 0; overflow-wrap: anywhere; }
         .hero { padding: 42px 0 52px; }
         .hero-panel { padding: 27px; }
         .section-heading, .footer-content { display: block; }
@@ -360,7 +382,7 @@ PAGE = """<!doctype html>
         </div>
       </header>
 
-      <main id="main-content">
+        <main id="main-content" tabindex="-1">
         <section class="hero" id="about" aria-labelledby="hero-title">
           <div>
             <p class="eyebrow" data-i18n="eyebrow">Remote work · Sudanese talent</p>
@@ -581,6 +603,8 @@ PAGE = """<!doctype html>
       let currentLanguage = "en";
       const languageButtons = document.querySelectorAll("[data-language]");
       const html = document.documentElement;
+      const skipLink = document.querySelector(".skip-link");
+      const mainContent = document.getElementById("main-content");
       const searchForm = document.getElementById("job-search");
       const keyword = document.getElementById("keyword");
       const workType = document.getElementById("work-type");
@@ -637,6 +661,12 @@ PAGE = """<!doctype html>
         searchMessage.textContent = message;
         searchMessage.classList.toggle("error", isError);
       }
+
+      skipLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        mainContent.focus({ preventScroll: true });
+        mainContent.scrollIntoView({ block: "start" });
+      });
 
       function searchJobs(event) {
         event.preventDefault();

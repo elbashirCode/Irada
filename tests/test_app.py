@@ -64,6 +64,7 @@ class AppSmokeTests(unittest.TestCase):
         mains = [element for element in elements if element["tag"] == "main"]
         self.assertEqual(len(mains), 1)
         self.assertEqual(mains[0]["attrs"].get("id"), "main-content")
+        self.assertEqual(mains[0]["attrs"].get("tabindex"), "-1")
 
         headings = [
             element
@@ -192,6 +193,18 @@ class AppSmokeTests(unittest.TestCase):
                 for link in links
             )
         )
+
+    def test_home_page_includes_responsive_and_focus_regression_contract(self):
+        response = self.client.get("/")
+        page = response.get_data(as_text=True)
+
+        self.assertIn('<meta name="viewport" content="width=device-width, initial-scale=1">', page)
+        self.assertIn("@media (max-width: 840px)", page)
+        self.assertIn("header { flex-wrap: wrap; row-gap: 14px; }", page)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) auto;", page)
+        self.assertIn("grid-column: 1 / -1;", page)
+        self.assertIn(":focus-visible", page)
+        self.assertIn("mainContent.focus({ preventScroll: true })", page)
 
 if __name__ == "__main__":
     unittest.main()
