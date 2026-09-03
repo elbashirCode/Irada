@@ -13,6 +13,12 @@ endpoint returns a JSON status response for a simple runtime check.
 
 ## Validation
 
+Run the smoke tests with:
+
+```bash
+python -m unittest discover -s tests
+```
+
 Run the normal validation checks with:
 
 ```bash
