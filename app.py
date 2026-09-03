@@ -482,7 +482,8 @@ PAGE = """<!doctype html>
           contract: "Contract",
           searchButton: "Search roles",
           searchRequired: "Enter at least 2 characters to search roles.",
-          searchFound: "{count} roles match “{keyword}”.",
+          searchFoundOne: "{count} roles match “{keyword}”.",
+          searchFoundMany: "{count} roles match “{keyword}”.",
           searchNone: "No roles match “{keyword}” yet. Try another search.",
           howEyebrow: "A clear next step",
           howTitle: "Work should meet you halfway",
@@ -541,8 +542,9 @@ PAGE = """<!doctype html>
           contract: "تعاقد",
           searchButton: "ابحث عن وظائف",
           searchRequired: "أدخل حرفين على الأقل للبحث عن الوظائف.",
-          searchFound: "تطابق {count} وظائف مع بحث «{keyword}».",
-          searchNone: "لا توجد وظائف تطابق «{keyword}» حالياً. جرّب بحثاً آخر.",
+          searchFoundOne: "وجدنا وظيفة واحدة تطابق بحثك عن «{keyword}».",
+          searchFoundMany: "وجدنا {count} وظائف تطابق بحثك عن «{keyword}».",
+          searchNone: "لا توجد وظائف تطابق بحثك عن «{keyword}» حالياً. جرّب بحثاً آخر.",
           howEyebrow: "خطوة واضحة إلى الأمام",
           howTitle: "العمل يجب أن يلتقي بك في منتصف الطريق",
           howIntro: "صُممت إرادة لتجعل العمل عن بُعد أكثر إنسانية وإتاحة وإمكانية.",
@@ -657,7 +659,12 @@ PAGE = """<!doctype html>
           return searchable.includes(normalizedQuery) && (selectedType === "all" || selectedType === job.type);
         });
         renderJobs(filteredJobs);
-        showSearchMessage(filteredJobs.length ? "searchFound" : "searchNone", { count: filteredJobs.length, keyword: query });
+        const resultMessageKey = filteredJobs.length === 0
+          ? "searchNone"
+          : filteredJobs.length === 1
+            ? "searchFoundOne"
+            : "searchFoundMany";
+        showSearchMessage(resultMessageKey, { count: filteredJobs.length, keyword: query });
       }
 
       languageButtons.forEach((button) => {
